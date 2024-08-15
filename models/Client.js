@@ -3,7 +3,7 @@ const { model, Schema } = require("mongoose");
 const ClientSchema = new Schema({
   name: String,
   link: String,
-  accessCode: String,
+  accessCode: Number,
   location: String,
   date: String,
   hasPaid: Boolean,
