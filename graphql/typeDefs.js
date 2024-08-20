@@ -13,9 +13,11 @@ module.exports = gql`
     updatedAt: String
     photoCount: Int
     userId: ID
+    photos: [Photo]
   }
 
   type User {
+    username: String
     email: String
     password: String
     token: String
@@ -31,6 +33,7 @@ module.exports = gql`
   }
 
   input RegisterInput {
+    username: String
     email: String
     password: String
     confirmPassword: String
@@ -41,13 +44,52 @@ module.exports = gql`
     password: String
   }
 
+  type Photo {
+    name: String
+    createdAt: String
+    format: String
+    bytes: Int
+    url: String
+    publicId: String
+    version: Int
+    assetId: String
+  }
+
+  input PhotoInput {
+    name: String
+    createdAt: String
+    format: String
+    bytes: Int
+    url: String
+    publicId: String
+    version: Int
+    assetId: String
+  }
+
+  type DashboardOverview {
+    totalClients: Int
+    totalPhotos: Int
+    totalPaidClients: Int
+  }
+
+  type CheckAccessCodeResponse {
+    isValid: Boolean!
+    link: String
+  }
+
   type Query {
     user(id: ID): User!
+    getUserByUsername(username: String!): User!
+    checkAccessCode(accessCode: Int!): CheckAccessCodeResponse
 
     getClient(clientId: ID!): Client
     getClients(amount: Int): [Client]
     getAllClients: [Client]
     getAllClientsByUserId(userId: ID!): [Client]
+
+    getClientPhotos(clientId: ID!): [Photo]
+
+    getDashboardOverview(userId: ID!): DashboardOverview!
   }
 
   type Mutation {
@@ -57,5 +99,10 @@ module.exports = gql`
     createClient(clientInput: ClientInput, userId: ID!): Client!
     deleteClient(clientId: ID!): String!
     editClient(clientId: ID!, clientInput: ClientInput): Client!
+
+    addPhotoToClient(clientId: ID!, photoInput: PhotoInput!): Client!
+
+    deletePhoto(publicId: String!): Boolean
+    deleteAllClientPhotos(clientId: ID!): Boolean
   }
 `;

@@ -1,4 +1,13 @@
+require("dotenv").config();
+
 const Client = require("../../models/Client");
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 module.exports = {
   Query: {
@@ -17,6 +26,27 @@ module.exports = {
         id: client._id.toString(),
         ...client._doc,
       }));
+    },
+    async getClientPhotos(_, { clientId }) {
+      const client = await Client.findById(clientId).populate("photos");
+      if (!client) {
+        throw new Error("Client not found");
+      }
+      return client.photos;
+    },
+
+    async checkAccessCode(_, { accessCode }) {
+      const client = await Client.findOne({ accessCode });
+      if (!client) {
+        return {
+          isValid: false,
+          link: null,
+        };
+      }
+      return {
+        isValid: true,
+        link: client.link,
+      };
     },
   },
   Mutation: {
@@ -64,6 +94,83 @@ module.exports = {
         { name, location, hasPaid, link, accessCode, date }
       );
       return updatedClient;
+    },
+    async addPhotoToClient(_, { clientId, photoInput }) {
+      const client = await Client.findById(clientId);
+      if (!client) {
+        throw new Error("Client not found");
+      }
+
+      client.photos.push(photoInput);
+      client.photoCount = client.photos.length;
+      await client.save();
+
+      return client;
+    },
+    async deletePhoto(_, { publicId }) {
+      // Delete photo from Cloudinary
+      try {
+        const result = await cloudinary.uploader.destroy(publicId);
+        console.log("Cloudinary response:", result);
+
+        if (result.result === "ok") {
+          // Remove photo from the database
+          const client = await Client.findOne({ "photos.publicId": publicId });
+
+          if (client) {
+            // Remove photo from client's photos array
+            client.photos = client.photos.filter(
+              (photo) => photo.publicId !== publicId
+            );
+            client.photoCount = client.photos.length; // Update photoCount
+            await client.save();
+            return true;
+          } else {
+            throw new Error("Photo not found in database.");
+          }
+        } else {
+          throw new Error(`Photo deletion failed: ${result.result}`);
+        }
+      } catch (error) {
+        console.error("Error deleting photo:", error);
+        throw new Error(`Failed to delete photo: ${error.message}`);
+      }
+    },
+    async deleteAllClientPhotos(_, { clientId }) {
+      // Find the client
+      const client = await Client.findById(clientId);
+      if (!client) {
+        throw new Error("Client not found");
+      }
+
+      try {
+        // Delete each photo from Cloudinary
+        const photoDeletionPromises = client.photos.map((photo) =>
+          cloudinary.uploader.destroy(photo.publicId)
+        );
+
+        // Wait for all photo deletions to complete
+        const results = await Promise.all(photoDeletionPromises);
+
+        // Check results and handle errors
+        results.forEach((result, index) => {
+          if (result.result !== "ok") {
+            console.error(
+              `Failed to delete photo ${client.photos[index].publicId}: ${result.result}`
+            );
+          }
+        });
+
+        // Remove all photos from the client's photos array
+        client.photos = [];
+        client.photoCount = 0; // Update photoCount
+        await client.save();
+
+        return true;
+      } catch (error) {
+        console.error("Error deleting photos:", error);
+        throw new Error(`Failed to delete all photos: ${error.message}`);
+      }
     },
   },
 };

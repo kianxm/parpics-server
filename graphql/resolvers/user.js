@@ -8,13 +8,21 @@ const bcrypt = require("bcryptjs");
 module.exports = {
   Query: {
     user: (_, { id }) => User.findById(id),
+    async getUserByUsername(_, { username }) {
+      const user = await User.findOne({ username });
+      if (!user) {
+        throw new Error("User not found");
+      }
+      return user;
+    },
   },
   Mutation: {
-    async registerUser(_, { registerInput: { email, password } }) {
-      const oldUser = await User.findOne({ email });
-      if (oldUser) {
+    async registerUser(_, { registerInput: { username, email, password } }) {
+      const emailAlreadyExists = await User.findOne({ email });
+      const usernameAlreadyExists = await User.findOne({ username });
+      if (emailAlreadyExists || usernameAlreadyExists) {
         throw new ApolloError(
-          "A user with that email already exists " + email,
+          "Username or email already exists: " + email,
           "USER_ALREADY_EXISTS"
         );
       }
@@ -22,12 +30,14 @@ module.exports = {
       const encryptedPassword = await bcrypt.hash(password, 10);
 
       const newUser = new User({
+        username: username.toLowerCase(),
         email: email.toLowerCase(),
         password: encryptedPassword,
       });
 
       const token = jwt.sign(
         {
+          username,
           user_id: newUser._id,
           email,
         },
