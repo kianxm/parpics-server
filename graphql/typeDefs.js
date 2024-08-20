@@ -88,6 +88,7 @@ module.exports = gql`
     getAllClientsByUserId(userId: ID!): [Client]
 
     getClientPhotos(clientId: ID!): [Photo]
+    getAlbumPage(link: String!): Client!
 
     getDashboardOverview(userId: ID!): DashboardOverview!
   }
@@ -101,6 +102,7 @@ module.exports = gql`
     editClient(clientId: ID!, clientInput: ClientInput): Client!
 
     addPhotoToClient(clientId: ID!, photoInput: PhotoInput!): Client!
+    toggleFavoritePhoto(publicId: String!): Photo
 
     deletePhoto(publicId: String!): Boolean
     deleteAllClientPhotos(clientId: ID!): Boolean

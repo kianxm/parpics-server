@@ -48,6 +48,14 @@ module.exports = {
         link: client.link,
       };
     },
+
+    async getAlbumPage(_, { link }) {
+      const client = await Client.findOne({ link });
+      if (!client) {
+        throw new Error("Client not found");
+      }
+      return client;
+    },
   },
   Mutation: {
     async createClient(
@@ -171,6 +179,18 @@ module.exports = {
         console.error("Error deleting photos:", error);
         throw new Error(`Failed to delete all photos: ${error.message}`);
       }
+    },
+
+    async toggleFavoritePhoto(_, { publicId }) {
+      const photo = await Photo.findOne({ publicId });
+      if (!photo) {
+        throw new Error("Photo not found");
+      }
+
+      photo.isFavorited = !photo.isFavorited;
+      await photo.save();
+
+      return photo;
     },
   },
 };
