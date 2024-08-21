@@ -18,11 +18,39 @@ module.exports = {
   },
   Mutation: {
     async registerUser(_, { registerInput: { username, email, password } }) {
+      if (!username || !email || !password) {
+        throw new ApolloError("All fields are required", "MISSING_FIELDS");
+      }
+
+      const passwordRegex =
+        /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^\w\d\s:])([^\s]){8,16}$/gm;
+
+      if (!password.match(passwordRegex)) {
+        throw new ApolloError(
+          "Password must be between 8 to 16 characters and contain at least one lowercase letter, one uppercase letter, one numeric digit, and one special character",
+          "INVALID_PASSWORD"
+        );
+      }
+
+      const emailRegex = /^((?!\.)[\w\-_.]*[^.])(@\w+)(\.\w+(\.\w+)?[^.\W])$/gm;
+
+      if (!email.match(emailRegex)) {
+        throw new ApolloError("Invalid email", "INVALID_EMAIL");
+      }
+
       const emailAlreadyExists = await User.findOne({ email });
       const usernameAlreadyExists = await User.findOne({ username });
-      if (emailAlreadyExists || usernameAlreadyExists) {
+
+      if (emailAlreadyExists) {
         throw new ApolloError(
-          "Username or email already exists: " + email,
+          "Email already exists: " + email,
+          "USER_ALREADY_EXISTS"
+        );
+      }
+
+      if (usernameAlreadyExists) {
+        throw new ApolloError(
+          "Username already exists: " + username,
           "USER_ALREADY_EXISTS"
         );
       }
