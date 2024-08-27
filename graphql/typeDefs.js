@@ -12,11 +12,13 @@ module.exports = gql`
     createdAt: String
     updatedAt: String
     photoCount: Int
+    websiteTemplate: Int
     userId: ID
     photos: [Photo]
   }
 
   type User {
+    name: String
     username: String
     email: String
     password: String
@@ -33,10 +35,10 @@ module.exports = gql`
   }
 
   input RegisterInput {
+    name: String
     username: String
     email: String
     password: String
-    confirmPassword: String
   }
 
   input LoginInput {
@@ -53,6 +55,8 @@ module.exports = gql`
     publicId: String
     version: Int
     assetId: String
+    isFavorite: Boolean
+    comments: [Comment]
   }
 
   input PhotoInput {
@@ -64,6 +68,32 @@ module.exports = gql`
     publicId: String
     version: Int
     assetId: String
+    isFavorite: Boolean
+  }
+
+  type Viewer {
+    id: ID!
+    name: String!
+    email: String!
+    createdAt: String!
+  }
+
+  input ViewerInput {
+    name: String!
+    email: String!
+    password: String
+  }
+
+  type Comment {
+    id: ID!
+    author: String!
+    text: String!
+    createdAt: String!
+  }
+
+  input CommentInput {
+    author: String!
+    text: String!
   }
 
   type DashboardOverview {
@@ -79,6 +109,7 @@ module.exports = gql`
 
   type Query {
     user(id: ID): User!
+    getUserById(userId: ID!): User!
     getUserByUsername(username: String!): User!
     checkAccessCode(accessCode: Int!): CheckAccessCodeResponse
 
@@ -95,6 +126,7 @@ module.exports = gql`
 
   type Mutation {
     registerUser(registerInput: RegisterInput): User!
+    registerViewer(registerInput: RegisterInput): User!
     loginUser(loginInput: LoginInput): User!
 
     createClient(clientInput: ClientInput, userId: ID!): Client!
@@ -102,9 +134,18 @@ module.exports = gql`
     editClient(clientId: ID!, clientInput: ClientInput): Client!
 
     addPhotoToClient(clientId: ID!, photoInput: PhotoInput!): Client!
-    toggleFavoritePhoto(publicId: String!): Photo
+    toggleFavoritePhoto(clientId: ID!, publicId: String!): String!
+
+    addCommentToPhoto(
+      clientId: ID!
+      publicId: String!
+      commentInput: CommentInput!
+    ): Photo!
+    deleteComment(clientId: ID!, publicId: String!, commentId: ID!): String!
 
     deletePhoto(publicId: String!): Boolean
     deleteAllClientPhotos(clientId: ID!): Boolean
+
+    updateClientWebsiteTemplate(clientId: ID!, templateId: Int!): String!
   }
 `;

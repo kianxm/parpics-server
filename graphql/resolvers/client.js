@@ -181,16 +181,91 @@ module.exports = {
       }
     },
 
-    async toggleFavoritePhoto(_, { publicId }) {
-      const photo = await Photo.findOne({ publicId });
+    async toggleFavoritePhoto(_, { clientId, publicId }) {
+      const client = await Client.findOne({ _id: clientId });
+      if (!client) {
+        throw new Error("Client not found");
+      }
+
+      const photo = client.photos.find((photo) => photo.publicId === publicId);
       if (!photo) {
         throw new Error("Photo not found");
       }
 
-      photo.isFavorited = !photo.isFavorited;
-      await photo.save();
+      photo.isFavorite = !photo.isFavorite;
+      await client.save();
 
-      return photo;
+      return "Success";
+    },
+
+    async addCommentToPhoto(_, { clientId, publicId, commentInput }) {
+      const client = await Client.findById(clientId);
+      if (!client) {
+        throw new Error("Client not found");
+      }
+
+      const photo = client.photos.find((photo) => photo.publicId === publicId);
+      if (!photo) {
+        throw new Error("Photo not found");
+      }
+
+      const newComment = {
+        author: commentInput.author,
+        text: commentInput.text,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Add the new comment to the photo's comments array
+      photo.comments = photo.comments
+        ? [...photo.comments, newComment]
+        : [newComment];
+
+      const res = await client.save();
+
+      return {
+        id: res._id.toString(),
+        photo,
+      };
+    },
+    async deleteComment(_, { clientId, publicId, commentId }) {
+      // Find the client by ID
+      const client = await Client.findById(clientId);
+      if (!client) {
+        throw new Error("Client not found", "CLIENT_NOT_FOUND");
+      }
+
+      // Find the specific photo within the client's photos array
+      const photo = client.photos.find((photo) => photo.publicId === publicId);
+      if (!photo) {
+        throw new Error("Photo not found", "PHOTO_NOT_FOUND");
+      }
+
+      const commentIndex = photo.comments.findIndex(
+        (comment) => comment.id === commentId
+      );
+
+      if (commentIndex === -1) {
+        throw new Error("Comment not found", "COMMENT_NOT_FOUND");
+      }
+
+      photo.comments.splice(commentIndex, 1);
+
+      await client.save();
+
+      return "Comment deleted successfully";
+    },
+    async updateClientWebsiteTemplate(_, { clientId, templateId }) {
+      const updatedClient = await Client.findByIdAndUpdate(
+        clientId,
+        { $set: { websiteTemplate: templateId } },
+        { new: true }
+      );
+
+      if (!updatedClient) {
+        throw new Error("Client not found");
+      }
+
+      return "Success";
     },
   },
 };
