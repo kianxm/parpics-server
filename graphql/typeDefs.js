@@ -15,6 +15,33 @@ module.exports = gql`
     websiteTemplate: Int
     userId: ID
     photos: [Photo]
+    settings: ClientSettings
+  }
+
+  type ClientSettings {
+    enableWebsite: Boolean
+    allowPhotoComments: Boolean
+    allowAlbumComments: Boolean
+    allowSingleDownload: Boolean
+    allowBulkDownload: Boolean
+    allowFavorites: Boolean
+    allowSharing: Boolean
+    allowViewing: Boolean
+    allowPayment: Boolean
+    showWatermark: Boolean
+  }
+
+  input ClientSettingsInput {
+    enableWebsite: Boolean
+    allowPhotoComments: Boolean
+    allowAlbumComments: Boolean
+    allowSingleDownload: Boolean
+    allowBulkDownload: Boolean
+    allowFavorites: Boolean
+    allowSharing: Boolean
+    allowViewing: Boolean
+    allowPayment: Boolean
+    showWatermark: Boolean
   }
 
   type User {
@@ -122,6 +149,8 @@ module.exports = gql`
     getAlbumPage(link: String!): Client!
 
     getDashboardOverview(userId: ID!): DashboardOverview!
+
+    getClientSettings(clientId: ID!): ClientSettings!
   }
 
   type Mutation {
@@ -147,5 +176,10 @@ module.exports = gql`
     deleteAllClientPhotos(clientId: ID!): Boolean
 
     updateClientWebsiteTemplate(clientId: ID!, templateId: Int!): String!
+
+    updateClientSettings(
+      clientId: ID!
+      settingsInput: ClientSettingsInput!
+    ): ClientSettings!
   }
 `;

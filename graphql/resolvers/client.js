@@ -27,6 +27,7 @@ module.exports = {
         ...client._doc,
       }));
     },
+
     async getClientPhotos(_, { clientId }) {
       const client = await Client.findById(clientId).populate("photos");
       if (!client) {
@@ -56,7 +57,16 @@ module.exports = {
       }
       return client;
     },
+
+    async getClientSettings(_, { clientId }) {
+      const client = await Client.findById(clientId).select("settings").lean();
+      if (!client) {
+        throw new Error("Client not found");
+      }
+      return client.settings;
+    },
   },
+
   Mutation: {
     async createClient(
       _,
@@ -83,6 +93,7 @@ module.exports = {
         ...res._doc,
       };
     },
+
     async deleteClient(_, { clientId }) {
       const result = await Client.deleteOne({ _id: clientId });
       if (result.deletedCount === 0) {
@@ -90,6 +101,7 @@ module.exports = {
       }
       return "Client deleted";
     },
+
     async editClient(
       _,
       {
@@ -103,6 +115,7 @@ module.exports = {
       );
       return updatedClient;
     },
+
     async addPhotoToClient(_, { clientId, photoInput }) {
       const client = await Client.findById(clientId);
       if (!client) {
@@ -115,6 +128,7 @@ module.exports = {
 
       return client;
     },
+
     async deletePhoto(_, { publicId }) {
       // Delete photo from Cloudinary
       try {
@@ -144,6 +158,7 @@ module.exports = {
         throw new Error(`Failed to delete photo: ${error.message}`);
       }
     },
+
     async deleteAllClientPhotos(_, { clientId }) {
       // Find the client
       const client = await Client.findById(clientId);
@@ -169,9 +184,8 @@ module.exports = {
           }
         });
 
-        // Remove all photos from the client's photos array
         client.photos = [];
-        client.photoCount = 0; // Update photoCount
+        client.photoCount = 0;
         await client.save();
 
         return true;
@@ -215,7 +229,6 @@ module.exports = {
         createdAt: new Date().toISOString(),
       };
 
-      // Add the new comment to the photo's comments array
       photo.comments = photo.comments
         ? [...photo.comments, newComment]
         : [newComment];
@@ -227,14 +240,13 @@ module.exports = {
         photo,
       };
     },
+
     async deleteComment(_, { clientId, publicId, commentId }) {
-      // Find the client by ID
       const client = await Client.findById(clientId);
       if (!client) {
         throw new Error("Client not found", "CLIENT_NOT_FOUND");
       }
 
-      // Find the specific photo within the client's photos array
       const photo = client.photos.find((photo) => photo.publicId === publicId);
       if (!photo) {
         throw new Error("Photo not found", "PHOTO_NOT_FOUND");
@@ -249,11 +261,11 @@ module.exports = {
       }
 
       photo.comments.splice(commentIndex, 1);
-
       await client.save();
 
       return "Comment deleted successfully";
     },
+
     async updateClientWebsiteTemplate(_, { clientId, templateId }) {
       const updatedClient = await Client.findByIdAndUpdate(
         clientId,
@@ -266,6 +278,20 @@ module.exports = {
       }
 
       return "Success";
+    },
+
+    async updateClientSettings(_, { clientId, settingsInput }) {
+      const updatedClient = await Client.findByIdAndUpdate(
+        clientId,
+        { $set: { settings: settingsInput } },
+        { new: true }
+      );
+
+      if (!updatedClient) {
+        throw new Error("Client not found");
+      }
+
+      return updatedClient.settings;
     },
   },
 };

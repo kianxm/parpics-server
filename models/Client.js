@@ -22,6 +22,22 @@ const PhotoSchema = new Schema(
   { _id: false }
 );
 
+const ClientSettingsSchema = new Schema(
+  {
+    enableWebsite: { type: Boolean, default: true },
+    allowPhotoComments: { type: Boolean, default: true },
+    allowAlbumComments: { type: Boolean, default: true },
+    allowSingleDownload: { type: Boolean, default: true },
+    allowBulkDownload: { type: Boolean, default: true },
+    allowFavorites: { type: Boolean, default: true },
+    allowSharing: { type: Boolean, default: true },
+    allowViewing: { type: Boolean, default: true },
+    allowPayment: { type: Boolean, default: true },
+    showWatermark: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
 const ClientSchema = new Schema({
   name: String,
   link: String,
@@ -36,6 +52,10 @@ const ClientSchema = new Schema({
   photos: [PhotoSchema],
   comments: [CommentSchema],
   websiteTemplate: { type: Number, default: 0 },
+  settings: {
+    type: ClientSettingsSchema,
+    default: () => ({}),
+  },
 });
 
 module.exports = model("Client", ClientSchema);
