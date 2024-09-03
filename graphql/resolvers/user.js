@@ -98,10 +98,13 @@ module.exports = {
     async loginUser(_, { loginInput: { email, password } }) {
       const user = await User.findOne({ email });
       if (user && bcrypt.compare(password, user.password)) {
+        // Return user data after sign in
         const token = jwt.sign(
           {
             user_id: user._id,
             email,
+            username: user.username,
+            name: user.name,
           },
           process.env.JWT_SECRET,
           {
@@ -109,6 +112,7 @@ module.exports = {
           }
         );
         user.token = token;
+
         return {
           id: user.id,
           ...user._doc,

@@ -1,7 +1,8 @@
 const { model, Schema } = require("mongoose");
 
 const CommentSchema = new Schema({
-  author: { type: String, required: true },
+  authorId: { type: String, required: true },
+  authorName: { type: String, required: true },
   text: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
@@ -47,7 +48,7 @@ const ClientSchema = new Schema({
   hasPaid: Boolean,
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-  photoCount: Number,
+  photoCount: { type: Number, default: 0 },
   userId: { type: Schema.Types.ObjectId, ref: "User" },
   photos: [PhotoSchema],
   comments: [CommentSchema],

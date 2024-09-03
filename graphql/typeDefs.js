@@ -113,13 +113,15 @@ module.exports = gql`
 
   type Comment {
     id: ID!
-    author: String!
+    authorId: String!
+    authorName: String!
     text: String!
     createdAt: String!
   }
 
   input CommentInput {
-    author: String!
+    authorId: String!
+    authorName: String!
     text: String!
   }
 
@@ -127,6 +129,8 @@ module.exports = gql`
     totalClients: Int
     totalPhotos: Int
     totalPaidClients: Int
+    storageUsed: Int
+    storageRemaining: Int
   }
 
   type CheckAccessCodeResponse {

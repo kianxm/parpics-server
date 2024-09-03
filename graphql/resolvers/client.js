@@ -83,7 +83,6 @@ module.exports = {
         accessCode: accessCode,
         date: date,
         userId: userId,
-        photoCount: 0,
       });
 
       const res = await createdClient.save();
@@ -224,7 +223,8 @@ module.exports = {
       }
 
       const newComment = {
-        author: commentInput.author,
+        authorId: commentInput.authorId,
+        authorName: commentInput.authorName,
         text: commentInput.text,
         createdAt: new Date().toISOString(),
       };
